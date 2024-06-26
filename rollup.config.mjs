@@ -11,6 +11,10 @@ const ignore = [
   '**/*.test-d.ts',
   '**/*.fixtures.ts',
   '**/*.fixture.ts',
+  '**/fixtures.ts',
+  '**/types.*.ts',
+  '**/types.ts',
+  '**/fixture.ts',
   'src/tests/**/*',
   'src/config/**/*',
 ];
@@ -31,40 +35,46 @@ const input = Object.fromEntries(
   ]),
 );
 
-export default defineConfig({
-  input,
+const plugins = [
+  tscAlias(),
+  typescript({
+    tsconfigOverride: {
+      exclude: ignore,
+    },
+  }),
 
-  plugins: [
-    tscAlias(),
-    typescript({
-      tsconfigOverride: {
-        exclude: ignore,
+  nodeExternals({
+    optDeps: false,
+    builtinsPrefix: 'strip',
+  }),
+];
+
+export default defineConfig([
+  {
+    input,
+    plugins,
+    output: [
+      {
+        format: 'cjs',
+        sourcemap: true,
+        dir: `lib`,
+        preserveModulesRoot: 'src',
+        preserveModules: true,
+
+        entryFileNames: '[name].cjs',
       },
-    }),
-
-    nodeExternals({
-      optDeps: false,
-      builtinsPrefix: 'strip',
-    }),
-  ],
-  external: ['node:path'],
-  output: [
-    {
-      format: 'cjs',
-      sourcemap: true,
-      dir: `lib`,
-      preserveModulesRoot: 'src',
-      preserveModules: true,
-
-      entryFileNames: '[name].cjs',
-    },
-    {
-      format: 'es',
-      sourcemap: true,
-      dir: `lib`,
-      preserveModulesRoot: 'src',
-      preserveModules: true,
-      entryFileNames: '[name].js',
-    },
-  ],
-});
+      {
+        format: 'es',
+        sourcemap: true,
+        dir: `lib`,
+        preserveModulesRoot: 'src',
+        preserveModules: true,
+        entryFileNames: '[name].js',
+      },
+    ],
+  },
+  {
+    plugins,
+    input: ['./src/types.extended.ts', './src/types.ts'],
+  },
+]);
